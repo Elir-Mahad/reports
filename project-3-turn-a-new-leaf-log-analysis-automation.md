@@ -18,45 +18,57 @@
 
 ## Introduction
 
-In this project, we will create and use scripts to handle routine Cyber Security tasks. The main goal is to set up a workflow that monitors for unusual network traffic, using simple commands or scripts to detect issues and determine the next steps.
+This report outlines the implementation of cybersecurity measures within 'Turn a New Leaf' with a focus on establishing a robust workflow for monitoring network traffic to detect and address potential security threats promptly.
 
-Turn a New Leaf is a non-profit that helps youth in rural areas find jobs. Members must log in weekly to update their employment status and job search activities. As an Access Log Analyst, your job is to watch for unusual network activity, especially failed logins, and document these events. You'll provide weekly updates to your manager to keep the organization secure and compliant.
+As the Access Log Analyst at Turn a New Leaf, the role involves monitoring network activity for unusual patterns, particularly focusing on failed login attempts and other suspicious activities. Weekly updates are provided to senior management to ensure organizational security and compliance.
+
+To achieve effective monitoring, scripts will be developed and deployed to automate the detection of abnormal network traffic. These scripts will enable quick identification of potential security breaches, allowing for timely intervention and mitigation.
 
 ## Solutions
 
-This section outlines the structure of the proposed solutions for monitoring and analyzing logs. You will set up a continuous real-time monitoring system that reviews logs every hour and sends automated alerts for any anomalies detected. Logs will be stored centrally, and you will maintain a detailed logbook of incidents, actions, and resolutions. A weekly summary report will be emailed to your manager every Monday.
+Turn a New Leaf operates both Windows and Linux machines, with two web servers in their network. Our monitoring efforts will concentrate on the log files of these web servers.
 
-For monitoring, Bash will be used for log parsing and automation, while Python will handle data analysis. Some of the expected outcomes include the detection of failed login attempts and large data transfers using Bash, and the detailed analysis of log data using Python, ensuring swift action and thorough documentation. We will now proceed with a more in-depth analysis of the solutions and the corresponding code snippets.
+According to middleware, "a log is a record of events that have occurred, typically including a timestamp and event details. Logs are commonly used to troubleshoot issues, monitor system performance, and identify security concerns. Software programs and systems generate log files containing information about the application, user device, time, IP address, and more."("What is log monitoring? A detailed guide (updated)," n.d.).
+
+Furthermore, Log monitoring is the "observation of logs and metrics from a system, typically combined with dashboards, visualizations, and alerts. As engineers keep an eye on the present state of the application, they can identify issues or anomalies."("Logging vs monitoring: Improved visibility," 2024).
+
+We will utilize Bash scripts to parse logs for the detection of abnormal network traffic. Bash is "a computer program that allows you to directly control a computer’s operating system (OS) with a graphical user interface (GUI) or command-line interface (CLI)."(Klein, 2024).
+
+Additionally, we shall use Python to handle data analysis. According to amazon, "Python is a programming language that is widely used in web applications, software development, data science, and machine learning (ML)." ("What is Python? - Python programming language explained - AWS," n.d.).
+
+Some of the expected outcomes of this report include the detection of failed login attempts and large data transfers using Bash, and the detailed analysis of log data using Python, ensuring swift action and thorough documentation.
+
+Lets now proceed with a more in-depth analysis of the solutions and the corresponding code snippets.
 
 ### Monitoring targets and key commands
 
-Apache web server logs will be used to monitor login requests and errors for the website.
+The online system of Turn a New Leaf is maintained using an Apache web server. According to sumologic, "Apache HTTP Server is a free and open-source web server that delivers web content through the internet."(Hernandez, 2019).
 
-access.log: Records all requests made to the server, including URLs requested, client IP addresses, response status codes, and more. This log is useful for monitoring and analyzing traffic, including login attempts.
+Apache servers "provides a variety of different mechanisms for logging everything that happens on your server, from the initial request, through the URL mapping process, to the final resolution of the connection, including any errors that may have occurred in the process." ("Log files," n.d.).
 
-error.log: Records errors encountered by the server, such as issues with requests, server misconfigurations, and other problems. This log helps in identifying issues with website functionality, including failed login attempts due to server errors.
+For this report, we shall focus on the access log and error logs of the Apache web servers. According to sematext, "The Apache access logs are text files that include information about all the requests processed by the Apache server. You can expect to find information like the time of the request, the requested resource, the response code, time it took to respond, and the IP address used to request the data"(Sematext, 2023). On the other hand, "this file contains diagnostic information about any errors were encountered while processing requests"(Isaiah, 2023).
+
+With the identified log files in focus, we will now specify the types of issues to detect and develop corresponding code snippets to filter these issues from the logs.
 
 #### 1. Unusual Network Traffic Patterns that deviate from the norm
 
-In Access log, look for entries with unusually large Content-Length value, such as data transfer spikes exceeding 1GB in a short period.
+In Access log, we can use the below code snippet to look for entries with unusually large Content-Length value, such as data transfer spikes exceeding 1GB in a short period.
 
 ```
 awk '$10 > 1000000000' /var/log/apache2/access.log
 # filters access.log for requests with a Content-Length greater than 1GB
 ```
 
-In the Access log, look for IP addresses that deviate from the usual geographic locations of users.
+In the Access log, we can use the below code snippet to look for IP addresses that deviate from the usual geographic locations of users.
 
 ```
 awk '{print $1}' /var/log/apache2/access.log | sort | uniq -c | sort -nr
 # list IP addresses making requests, sorted by frequency
 ```
 
-Compare IPs against known ranges or use geo-location services to identify unusual IP addresses.
-
 #### 2. High Number of Failed Login Attempts
 
-In the Access log, look for repeated login attempts to the login endpoint, which could indicate a brute force attack.
+In the Access log, we can use the below code snippet to look for repeated login attempts to the login endpoint, which could indicate a brute force attack
 
 ```
 grep "/login" /var/log/apache2/access.log | grep "401" | awk '{print $1}' | sort | uniq -c | awk '$1 > 5'
@@ -65,7 +77,7 @@ grep "/login" /var/log/apache2/access.log | grep "401" | awk '{print $1}' | sort
 # identify IPs with more than 5 failures
 ```
 
-In the Error log, look for errors related to login failures:
+In the Error log, we can use the below code snippet to look for errors related to login failures.
 
 ```
 grep "login failed" /var/log/apache2/error.log
@@ -74,23 +86,25 @@ grep "login failed" /var/log/apache2/error.log
 
 #### 3. Unauthorized Access Attempts
 
-In the Access log, identify attempts to access restricted URLs or directories.
+In the Access log, we can use the below code snippet to identify attempts to access restricted URLs or directories.
 
 ```
 grep "/restricted-directory" /var/log/apache2/access.log
 # searches for access attempts to a specified restricted directory or URL
 ```
 
-In the Error log, look for errors indicating unauthorized access
+In the Error log, we can use the below snippet to look for errors indicating unauthorized access.
 
 ```
 grep "403 Forbidden" /var/log/apache2/error.log
 # searches for 403 Forbidden errors in error.log, indicating unauthorized access attempts
 ```
 
-### Key scripts and the monitoring workflow process
+### Key scripts and the log monitoring workflow process
 
-Now that we know the types of logs that we'll be focusing on, the next step is to outline the scripts that we'll be using for monitoring the logs with bash and analyzing them with python.
+With the identified log types and filtering commands established, the next step is to outline the Bash scripts for monitoring these logs and the subsequent Python scripts for their analysis.
+
+First, we will develop the Bash script, verify its functionality using test logs, and subsequently perform Python analysis. Screenshots of terminal results will be provided at the conclusion of each phase.
 
 #### Create bash script to monitor logs
 
@@ -143,7 +157,7 @@ Press enter
 ctrl  x
 ```
 
-Linux terminal result
+Below is the verification result from the Linux terminal:
 
 <img src="https://raw.githubusercontent.com/Elir-Mahad/porass/main/assets/CS/projects/project3/create-monitor-logs-file.png" alt="Description"  height="300">
 
@@ -202,7 +216,7 @@ Press enter
 ctrl  x
 ```
 
-Linux terminal result
+Below is the verification result from the Linux terminal:
 
 <img src="https://raw.githubusercontent.com/Elir-Mahad/porass/main/assets/CS/projects/project3/create-test-logs-file.png" alt="Description"  height="200">
 
@@ -260,7 +274,7 @@ Press enter
 ctrl  x
 ```
 
-Linux terminal result
+Below is the verification result from the Linux terminal:
 
 <img src="https://raw.githubusercontent.com/Elir-Mahad/porass/main/assets/CS/projects/project3/modify-monitor-logs-for-testing.png" alt="Description"  height="350">
 
@@ -280,7 +294,7 @@ chmod +x ./monitor_logs.sh
 # Run your script by specifying its path
 ```
 
-Linux terminal result :
+Below is the verification result from the Linux terminal:
 
 <img src="https://raw.githubusercontent.com/Elir-Mahad/porass/main/assets/CS/projects/project3/execute-monitor-logs-with-test-logs.png" alt="Description"  height="150">
 
@@ -420,20 +434,34 @@ python3 ~/Documents/analyze_logs.py
 
 ```
 
-Linux terminal result :
+Below is the verification result from the Linux terminal:
 
 <img src="https://raw.githubusercontent.com/Elir-Mahad/porass/main/assets/CS/projects/project3/python-logs-dataframe-terminal-result.png" alt="Description" height="100">
 
 ## Potential Iterations
 
-To improve the workflow, the log analyst could focus on increasing automation to reduce manual log checks, and implementing machine learning for more advanced anomaly detection. Automating the log monitoring process would save time and ensure real-time alerts, while machine learning could enhance the accuracy of detecting unusual patterns. Also, it would be useful to have playbooks and esclation matrixes prepared to handle any alerts in an automoted manner.
+To enhance workflow efficiency, focus could be placed on increasing automation of log checks and implementation of machine learning for advanced anomaly detection. Automating the log monitoring process would save time and ensure real-time alerts, while machine learning could enhance the accuracy of anomaly detection. Additionally, preparation of playbooks and escalation matrices for automated alert handling would be beneficial.
 
-To develop the necessary skills, the log analyst could take online courses in cybersecurity automation and machine learning. Additionally, obtaining relevant certifications like CompTIA Security+ or CISSP would deepen my knowledge and credibility. Participating in cybersecurity challenges and hackathons would provide practical experience and keep me updated with the latest trends and techniques.
+To develop the necessary skills, online courses in cybersecurity automation and machine learning could be pursued by the log analyst. Additionally, relevant certifications such as CompTIA Security+ or CISSP could be obtained to deepen knowledge and credibility. Participation in cybersecurity challenges and hackathons would provide practical experience and ensure staying updated with the latest trends and techniques.
 
 ## Conclusion
 
-The project established a comprehensive log monitoring system for Turn a New Leaf, a non-profit organization supporting rural youth employment. The workflow includes continuous real-time monitoring of logs, with Bash scripts handling log parsing and filtering to identify unusual network traffic and potential security issues, such as failed login attempts and large data transfers. Python is utilized for data analysis, generating immediate email alerts when predefined thresholds are exceeded, and maintaining thorough documentation of incidents. Key improvements for the future include increasing automation and incorporating machine learning for advanced anomaly detection. The project aims to enhance efficiency and security by streamlining the monitoring process and providing timely, actionable insights.
+The project established a comprehensive log monitoring system for Turn a New Leaf, a non-profit organization supporting rural youth employment. The workflow includes continuous monitoring of logs, with Bash scripts handling log parsing and filtering to identify unusual network traffic and potential security issues, such as failed login attempts and large data transfers, while Python is utilized for data analysis. Key improvements for the future include increasing automation and incorporating machine learning for advanced anomaly detection.
 
 ## References
 
-List any sources, references, or citations used in the project documentation.
+1. What is log monitoring? A detailed guide (updated). Middleware. (n.d.). https://middleware.io/blog/what-is-log-monitoring/
+
+2. Logging vs monitoring: Improved visibility - crowdstrike. crowdstrike.com. (2024, July 8). https://www.crowdstrike.com/cybersecurity-101/observability/logging-vs-monitoring/
+
+3. Klein, M. (2024, April 9). What is bash used for?. Codecademy Blog. https://www.codecademy.com/resources/blog/what-is-bash-used-for/
+
+4. What is python? - python programming language explained - AWS. (n.d.). https://aws.amazon.com/what-is/python/
+
+5. Hernandez, J. (2019, May 8). What is Apache? in-depth overview of Apache Web Server. Sumo Logic. https://www.sumologic.com/blog/apache-web-server-introduction/
+
+6. Log files. Log Files - Apache HTTP Server Version 2.4. (n.d.). https://httpd.apache.org/docs/2.4/logs.html
+
+7. Sematext, R. (2023, November 23). How to view & analyze apache access & error log files. Sematext. https://sematext.com/blog/apache-logs/
+
+8. Isaiah, A. (2023, November 23). How to view and configure Apache Access & error logs. Better Stack Community. https://betterstack.com/community/guides/logging/how-to-view-and-configure-apache-access-and-error-logs/
